@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>hello2 페이지</title>
+</head>
+
+<body>
+    <h1>안녕하세요!</h1>
+    <p th:text="${name} + '님, 방갑습니다.'"></p>
+    <p th:text="'나이: ' + ${age}"></p>
+    <p th:text="'오늘은 ' + ${today} + '입니다.'"></p>
+    <p th:text="'날씨는 ' + ${weather}"></p>
+    <p th:text="'취미는 ' + ${hobby}"></p>
+
+    <a th:href="@{/hello}">홈페이지 메인</a>
+</body>
+
+</html>
