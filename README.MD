@@ -28,10 +28,15 @@ hello2.html: 실행/과제내용추가완료
             return "hello2";
         } -->
 
-## 3주차 포트폴리오작성하기완료
+## 3주차 포트폴리오 작성하기 완료
 templatemo_578_first_portfolio를 사용하여 개인 템플릿 포트폴리오 작성
 상단 네비게이션 바에 글씨를 수정 폰트도 수정하여 크기를 키움
 기술/경험 부분을 전체적으로 수정
 <!-- 외부 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet"> -->를 cdn 주소를 가져와서 아이콘을 추가교체하였다.
 기술 상세페이지를 추가하였다.
 resources 하위에폴더에 public 폴더를 생성하고 detailed_web.html를 생성하였다.
+나의 4가지 영역을 수정하였다 (웹, AI, 레벨 디자인, 모델링), 각 4가지의 영역의 이미지를 교체하였다.
+프로필 사진을 변경하였다.
+상세 페이지를 추가하였다(detailed_AI.html, detailed_Leveldesig.html, detailed_Modeling.html).
+Lighthouse 성능 분석을 해보았는데 49가 나왔다.
+성능을 저하시키는 것은 Render-blocking requests (렌더링 차단 요청)과 Improve image delivery (이미지 전달 개선)이 가장 성능을 감소시키는 것이로 나타나있다.
