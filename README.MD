@@ -82,3 +82,10 @@ INSERT INTO testdb (name, age, gender) VALUES ('이철수', 22, '남');
 
 SELECT * FROM testdb;
 을 추가하여 수정하였다.
+
+## 5주차 로그인/로그아웃, 암호화완료
+보안 설정을 위해 의존성 모듈 2개를 추가하였다.
+로그인/로그아웃을 위한 회원을 추가하였다.
+보안 설정을 위해 SecurityConfig.java를, 요청 페이지를 위해 MemberController.java를, 회원 엔티티를 위해 Member.java를, 회원 리포지토리를 위해 MemberRepository.java를, 가입 데이터를 위해 Dto 폴더에 MemberForm.java를, 회원가입 서비스를 위해 MemberService.java를 추가하였다.
+회원가입 컨트롤러를 추가하기 위해 MemberController.java를 수정하였다.
+로그인 연결 시큐리티에 회원 조회 방법 제공을 위해 MemberService.java를 수정하였다.
