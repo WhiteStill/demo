@@ -26,6 +26,11 @@ public class MemberController {
 
     @PostMapping("/signup") // 회원가입처리
     public String signup(MemberForm memberForm, Model model) {
+            // 비밀번호 확인 검증 (저장 로직보다 먼저)
+    if (!memberForm.getPassword().equals(memberForm.getPasswordConfirm())) {
+        model.addAttribute("error", "비밀번호가 일치하지 않습니다.");
+        return "signup"; // DB 저장 없이 가입 화면으로 복귀
+    }
     try {
         memberService.signup(memberForm);
     } catch (IllegalArgumentException e) { // 중복아이디등

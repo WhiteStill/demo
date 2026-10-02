@@ -89,3 +89,18 @@ SELECT * FROM testdb;
 보안 설정을 위해 SecurityConfig.java를, 요청 페이지를 위해 MemberController.java를, 회원 엔티티를 위해 Member.java를, 회원 리포지토리를 위해 MemberRepository.java를, 가입 데이터를 위해 Dto 폴더에 MemberForm.java를, 회원가입 서비스를 위해 MemberService.java를 추가하였다.
 회원가입 컨트롤러를 추가하기 위해 MemberController.java를 수정하였다.
 로그인 연결 시큐리티에 회원 조회 방법 제공을 위해 MemberService.java를 수정하였다.
+추가적으로 SecurityConfig.java를 수정하여 로그아웃을 추가하였다.
+또 추가적으로 DB 비밀번호 깃허브에 업로드가 되지 않도록 수정하였다.
+index.html을 기존에 있던 내 포트폴리오 내용으로 수정하였다.
+로그인 상태 유지하는 로직을 개선했는데 SecurityConfig.java에
+.rememberMe(remember -> remember // 4. 로그인 상태 유지
+                        .key("원하는비밀키문자열")
+                        .tokenValiditySeconds(60 * 60 * 24 * 7)); // 7일
+을 뒤에 추가하였다. (7일 로그인 상태 유지)
+비밀 번호 확인 검증을 위한 로직으로 MemberController.java에 
+    public String signup(MemberForm memberForm, Model model) {
+            // 비밀번호 확인 검증 (저장 로직보다 먼저)
+    if (!memberForm.getPassword().equals(memberForm.getPasswordConfirm())) {
+        model.addAttribute("error", "비밀번호가 일치하지 않습니다.");
+        return "signup"; // DB 저장 없이 가입 화면으로 복귀 }}
+로 추가 과제를 완료하였다.
