@@ -118,3 +118,14 @@ MemberService에 findAll()을 추가하고 관리자가 회원 관리를 위해 
 메서드 보안을 위해 SecurityConfig.java에 @EnableMethodSecurity (@PreAuthorize 사용) 를 추가하고
 MemberService.java에 @PreAuthorize("hasRole('ADMIN')")를 추가하였다.
 그럼 회원이 우연히 관리자 권한 페이지를 사용하더라도 이중 잠금 처리가 되어서 회원 정보를 수정, 삭제를 할 수 없다.
+관리자 자신을 보호하기 위해 MemberService.java에 import org.springframework.security.core.context.SecurityContextHolder;를 추가하고 
+// 대상이 로그인한 본인이면 거부
+private void checkNotMyself(Member member) {
+    String me = SecurityContextHolder.getContext().getAuthentication().getName();
+    if (member.getUsername().equals(me)) {
+        throw new IllegalArgumentException("자기 자신의 권한 변경·삭제는 할 수 없습니다.");
+    }
+}
+를 추가하였다. 추가적으로 changeRole과 deleteMember에 checkNotMyself(member);를 추가하였다.
+MANAGER 권한 추가을 추가하기 위해 private static final List<String> ROLES = List.of("USER", "MANAGER", "ADMIN");로 변경하였고 SecurityConfig.java에 .requestMatchers("/testdb").hasAnyRole("ADMIN", "MANAGER")를 추가하였다.
+회원목록 숨김은 index.html에 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','MANAGER')">으로 수정하였다.

@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN") // [6주차] 관리자만
+                        .requestMatchers("/testdb").hasAnyRole("ADMIN", "MANAGER") // ← 추가
                         .anyRequest().authenticated())
                 // 2. 폼 로그인설정(인증)
                         .formLogin(form -> form

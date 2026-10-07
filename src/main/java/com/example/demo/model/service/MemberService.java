@@ -12,14 +12,15 @@ import com.example.demo.model.repository.MemberRepository;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.*; // User, UserDetails등
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service // 서비스등록
 public class MemberService implements UserDetailsService { // 로그인을위한인터페이스제공
     @Autowired
     private MemberRepository memberRepository;
-    @Autowired // SecurityConfig 에 등록한BCryptPasswordEncoder 주입
+    @Autowired // SecurityConfig 에 등록한 BCryptPasswordEncoder 주입
     private PasswordEncoder passwordEncoder;
-    private static final List<String> ROLES = List.of("USER", "ADMIN");
+    private static final List<String> ROLES = List.of("USER", "MANAGER", "ADMIN");
 
     public Member signup(MemberForm form) { // 회원가입
         if (memberRepository.existsByUsername(form.getUsername())) {
@@ -64,6 +65,7 @@ public class MemberService implements UserDetailsService { // 로그인을위한
         }
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+        checkNotMyself(member);
         member.setRole(role);
         memberRepository.save(member); // UPDATE (id 가있으면수정)
     }
@@ -72,6 +74,16 @@ public class MemberService implements UserDetailsService { // 로그인을위한
     public void deleteMember(Long id) { // 회원삭제
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                checkNotMyself(member);
         memberRepository.delete(member); // DELETE
     }
+    
+    // 대상이 로그인한 본인이면 거부
+    private void checkNotMyself(Member member) {
+        String me = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (member.getUsername().equals(me)) {
+            throw new IllegalArgumentException("자기 자신의 권한 변경·삭제는 할 수 없습니다.");
+        }
+    }
+    
 }
