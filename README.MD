@@ -104,3 +104,17 @@ index.html을 기존에 있던 내 포트폴리오 내용으로 수정하였다.
         model.addAttribute("error", "비밀번호가 일치하지 않습니다.");
         return "signup"; // DB 저장 없이 가입 화면으로 복귀 }}
 로 추가 과제를 완료하였다.
+
+## 6주차권한(ROLE) 접근제어, 관리자 페이지 분리완료
+메뉴에 내 정보 + USER 배지를 추가하였다.
+내 정보 페이지를 구현하기 위해 MemberService와MemberController에 코드를 추가였다.
+admin 계정을 생성하였다. 그리고 데이터 테이블에서 admin 계정을 관리자 계정으로 승격하였다.
+MemberService에 findAll()을 추가하고 관리자가 회원 관리를 위해 AdminController.java 을 생성하였다.
+권한 변경·삭제 서비스를 추가하기 위해 MemberService.java에 코드를 추가하였다.
+관리자 컨트롤러 추가를 위해 AdminController.java에 코드르 추가하였다.
+관리자가 회원관리 (삭제)를 할 수 있는지 확인하였다.
+하지만 /admin/members를 주소에 추가하면 회원도 관리자 권한 페이지를 사용할 수 있어
+이를 방지 하기 위해 SecurityConfig.java에 URL 권한 규칙을 추가하였다.
+메서드 보안을 위해 SecurityConfig.java에 @EnableMethodSecurity (@PreAuthorize 사용) 를 추가하고
+MemberService.java에 @PreAuthorize("hasRole('ADMIN')")를 추가하였다.
+그럼 회원이 우연히 관리자 권한 페이지를 사용하더라도 이중 잠금 처리가 되어서 회원 정보를 수정, 삭제를 할 수 없다.
