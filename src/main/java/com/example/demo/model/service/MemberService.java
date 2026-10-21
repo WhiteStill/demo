@@ -64,7 +64,14 @@ public class MemberService implements UserDetailsService { // 로그인을위한
     }
 
     // 관리자가 부여할 수 있는 권한(화면에서 넘어온 값을 그대로 믿지않는다)
-    @PreAuthorize("hasRole('ADMIN')") // 관리자만실행가능(2차잠금)
+    @PreAuthorize("hasRole('ADMIN')") // 관리자만 실행가능(2차잠금)
+    public List<Member> search(String keyword) { // 검색어가 없으면 전체, 있으면 아이디·이름 검색
+        if (isBlank(keyword)) {
+            return findAll();
+        }
+        String k = keyword.trim();
+        return memberRepository.findByUsernameContainingOrNameContaining(k, k, Sort.by("id"));
+    }
     public Member changeRole(Long id, String role) { // 권한변경
         if (!ROLES.contains(role)) { // 허용된 권한만
             throw new IllegalArgumentException("허용되지 않는권한 입니다: " + role);

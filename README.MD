@@ -146,3 +146,33 @@ Postman에서 POST로 회원등록을 하면 추가되는 걸 볼 수 있다.
 그럼 Postman에서 수정, 삭제, 조회를 할 수 있다.
 화면에서 API 사용하기 위해 AdminController.java에 코드를 추가하였다.
 그럼 홈페이지 관리자 API에서 간단하게 수정, 삭제, 변경, 조회를 할 수 있다.
+회원검색, 아이디나 이름에 검색어가 들어간 회원을 DB에서 찾기 위해 MemberRepository.java에 
+import java.util.List와 import org.springframework.data.domain.Sort를 추가하였다.
+또한 회원 검색, 검색어가 있을 때와 없을 때를 Service에서 나눠 처리하기 위해 MemberService.java에
+public List<Member> search(String keyword) { // 검색어가 없으면 전체, 있으면 아이디·이름 검색
+    if (isBlank(keyword)) {
+         return findAll();
+    }
+    String k = keyword.trim();
+    return memberRepository.findByUsernameContainingOrNameContaining(k, k, Sort.by("id"));
+}
+를 추가하였다.
+회원 검색 GET /api/admin/members?keyword=test(저는 test로 키워드가 되어 있습니다)를 받기위해 AdminApiController.java에 list()에 @RequestParam(required = false) String keyword 추가하고 search() 호출하도록 하고 오류 처리를 한곳으로 모으기 위해 create(), changeRole(), delete()에서 반복되던 try-catch 3개 제거하였다.
+오류 처리를 한곳에서 처리하도록 controller 폴더에 ApiExceptionHandler.java 파일을 새로 만들고
+package com.example.demo.controller;
+
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice(assignableTypes = AdminApiController.class) // 관리자 API 의 오류를 한 곳에서 처리
+public class ApiExceptionHandler {
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage())); // 400 {"error": "..."}
+    }
+}
+를 추가하여 에러 같은걸 한곳에서 처리하도록 추가하였다.

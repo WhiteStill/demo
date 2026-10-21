@@ -1,6 +1,9 @@
 package com.example.demo.model.repository;
 
 import java.util.Optional;
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.example.demo.model.domain.Member;
@@ -12,4 +15,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // 아이디 중복확인(존재하면true)
     boolean existsByUsername(String username);
+
+    // 아이디 또는 이름에 검색어가 들어간 회원 (LIKE %?%)
+    List<Member> findByUsernameContainingOrNameContaining(String username, String name, Sort sort);
 }
