@@ -45,4 +45,9 @@ public class AdminController {
         }
         return "redirect:/admin/members";
     }
+
+    @GetMapping("/members-api") // 우리가 만든JSON API 를 fetch 로사용하는회원관리화면
+    public String membersApi() {
+        return "admin/members-api"; // 데이터는 화면이 API로 가져온다
+    }
 }

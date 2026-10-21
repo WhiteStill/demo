@@ -129,3 +129,20 @@ private void checkNotMyself(Member member) {
 를 추가하였다. 추가적으로 changeRole과 deleteMember에 checkNotMyself(member);를 추가하였다.
 MANAGER 권한 추가을 추가하기 위해 private static final List<String> ROLES = List.of("USER", "MANAGER", "ADMIN");로 변경하였고 SecurityConfig.java에 .requestMatchers("/testdb").hasAnyRole("ADMIN", "MANAGER")를 추가하였다.
 회원목록 숨김은 index.html에 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','MANAGER')">으로 수정하였다.
+
+## 7주차회원관리REST API(JSON) 완료
+첫번째 Api를 추가하기 위해 컨트롤러에 MemberApiController.java를 추가하였다.
+내 정보를 API에 등록하기 위해 MemberApiController.java에 코드를 추가하였다.
+하지만 비밀번호까지 드대로 노출이 된다. 그래서 비밀 번호를 보호하기 위해
+MemberResponse.java를 추가하여 필요한 값만 불러내도록 하였다.
+Postman : API 를 호출해 보는 프로그램을 설치 및 실행하여 테스트 하였다.
+API 보안 설정을 위해 SecurityConfig.java에 코드를 추가하였다.
+상태 코드 응답 = 상태 코드 + 헤더 + 본문로 알 수 있다.
+관리자가 API – 조회, 검사를 할 수 있도록 controller 폴더에 AdminApiController.java 를 추가하였다.
+Postman에서 GET /api/admin/members를 하면 조회가 되는걸 확인 할 수 있다.
+관리자가 API - 등록을 추가하기 위해 AdminApiController.java에 코드를 추가하였다.
+Postman에서 POST로 회원등록을 하면 추가되는 걸 볼 수 있다.
+관리자가 API - 수정 · 삭제를 하기 위해 model/dto 에 RoleRequest.java를 생성하고, MemberService.java 의 changeRole() 을 수정하고 AdminApiController.java에 코드를 추가하였다.
+그럼 Postman에서 수정, 삭제, 조회를 할 수 있다.
+화면에서 API 사용하기 위해 AdminController.java에 코드를 추가하였다.
+그럼 홈페이지 관리자 API에서 간단하게 수정, 삭제, 변경, 조회를 할 수 있다.

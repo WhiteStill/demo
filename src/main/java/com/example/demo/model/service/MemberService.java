@@ -1,6 +1,7 @@
 package com.example.demo.model.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -20,9 +21,14 @@ public class MemberService implements UserDetailsService { // 로그인을위한
     private MemberRepository memberRepository;
     @Autowired // SecurityConfig 에 등록한 BCryptPasswordEncoder 주입
     private PasswordEncoder passwordEncoder;
+    private boolean isBlank(String value) { return value == null|| value.isBlank(); } // 클래스아래쪽
     private static final List<String> ROLES = List.of("USER", "MANAGER", "ADMIN");
 
     public Member signup(MemberForm form) { // 회원가입
+
+        if (isBlank(form.getUsername()) || isBlank(form.getPassword()) || isBlank(form.getName())) {
+            throw new IllegalArgumentException("아이디, 비밀번호, 이름은필수입니다.");
+        }
         if (memberRepository.existsByUsername(form.getUsername())) {
             throw new IllegalArgumentException("이미 사용중인 아이디입니다.");
         }
@@ -57,9 +63,9 @@ public class MemberService implements UserDetailsService { // 로그인을위한
         return memberRepository.findAll(Sort.by("id"));
     }
 
-    // 관리자가부여할수있는권한(화면에서 넘어온 값을 그대로 믿지않는다)
+    // 관리자가 부여할 수 있는 권한(화면에서 넘어온 값을 그대로 믿지않는다)
     @PreAuthorize("hasRole('ADMIN')") // 관리자만실행가능(2차잠금)
-    public void changeRole(Long id, String role) { // 권한변경
+    public Member changeRole(Long id, String role) { // 권한변경
         if (!ROLES.contains(role)) { // 허용된 권한만
             throw new IllegalArgumentException("허용되지 않는권한 입니다: " + role);
         }
@@ -68,6 +74,7 @@ public class MemberService implements UserDetailsService { // 로그인을위한
         checkNotMyself(member);
         member.setRole(role);
         memberRepository.save(member); // UPDATE (id 가있으면수정)
+        return memberRepository.save(member);
     }
 
     @PreAuthorize("hasRole('ADMIN')") // 관리자만실행가능(2차잠금)
@@ -84,6 +91,10 @@ public class MemberService implements UserDetailsService { // 로그인을위한
         if (member.getUsername().equals(me)) {
             throw new IllegalArgumentException("자기 자신의 권한 변경·삭제는 할 수 없습니다.");
         }
+    }
+
+    public Optional<Member> findById(Long id) {
+        return memberRepository.findById(id);
     }
     
 }
