@@ -159,6 +159,7 @@ public List<Member> search(String keyword) { // 검색어가 없으면 전체, �
 를 추가하였다.
 회원 검색 GET /api/admin/members?keyword=test(저는 test로 키워드가 되어 있습니다)를 받기위해 AdminApiController.java에 list()에 @RequestParam(required = false) String keyword 추가하고 search() 호출하도록 하고 오류 처리를 한곳으로 모으기 위해 create(), changeRole(), delete()에서 반복되던 try-catch 3개 제거하였다.
 오류 처리를 한곳에서 처리하도록 controller 폴더에 ApiExceptionHandler.java 파일을 새로 만들고
+
 package com.example.demo.controller;
 
 import java.util.Map;
@@ -176,3 +177,16 @@ public class ApiExceptionHandler {
     }
 }
 를 추가하여 에러 같은걸 한곳에서 처리하도록 추가하였다.
+
+## 9주차게시판(CRUD) + 본인확인완료
+글 엔티티를 만들기 위해 domain 폴더에 Post.java를 생성하여 코드를 추가하였다.
+글 쓰기 준비를 위해 dto 폴더에 PostForm.java, repository 폴더에PostRepository.java 를 생성하여 추가하였다.
+글 쓰기 서비스를 위해 service 폴더에PostService.java 를 생성하여 코드를 추가하였다.
+게시판 컨트롤러를 활성화 하기 위해 controller 폴더에BoardController.java 를 생성하여 코드를 추가하였다.
+상세 화면를 추가하기 위해 PostService.java, BoardController.java에 코드를 추가하였다.
+수정, 삭제 서비스를 추가하기 위해 PostService.java에 코드를 추가하였다.
+수정 · 삭제 컨트롤러를 하기 위해 BoardController.java 에 코드를 추가하였다.
+만약 로그인한 사람이 글쓴이면 수정가능 다르면 403이 뜬다
+관리자도 자신의 쓴 글만 수정가능 하지만 관리자는 다른사람의 글 삭제가능
+본인 확인 추가를 위해 PostService.java에 콛를 수정하였다. 
+
