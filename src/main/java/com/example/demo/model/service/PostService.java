@@ -52,6 +52,12 @@ return postRepository.findById(id)
 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "글이 존재하지 않습니다."));
 }
 
+public Post read(Long id) { // 상세보기: 조회수 1 증가
+    Post post = findById(id);
+    post.setViewCount(post.getViewCount() + 1);
+    return postRepository.save(post); // id가 있으니 UPDATE
+}
+
 public Post findForEdit(Long id) { // 수정화면에보여줄글(본인글만)
     Post post = findById(id);
     checkWriter(post); // ★추가
@@ -74,6 +80,11 @@ public void delete(Long id) { // 글삭제(본인또는관리자)
         checkWriter(post); // ★추가: 관리자는 누구 글이든 삭제가능
     postRepository.delete(post);
 }
+
+public List<Post> findMine(String username) { // 내가 쓴 글(최신 글이 위로)
+    return postRepository.findByAuthor_UsernameOrderByIdDesc(username);
+}
+
 private void checkWriter(Post post) { // 로그인 한사람이 글쓴이인지→ 아니면403
     String loginUsername = SecurityContextHolder.getContext().getAuthentication().getName();
     if (!post.getAuthor().getUsername().equals(loginUsername)) {

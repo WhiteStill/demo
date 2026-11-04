@@ -21,6 +21,14 @@ public class BoardController {
         return"board/list";
     }
     
+    @GetMapping("/my") // 내가 쓴 글: GET /board/my (로그인 필요)
+    public String myList(Principal principal, Model model) {
+        List<Post> posts = postService.findMine(principal.getName());
+        model.addAttribute("posts", posts);
+        model.addAttribute("listTitle", "내가 쓴 글"); // 목록 화면 재사용, 제목만 변경
+        return "board/list";
+    }
+    
     @GetMapping("/write") // 글쓰기화면: GET /board/write (로그인필요)
     public String writeForm() {
         return "board/form";
@@ -39,7 +47,7 @@ public class BoardController {
     
     @GetMapping("/{id}") // 상세: GET /board/3 (누구나)
     public String detail(@PathVariable Long id, Model model) {
-        Post post = postService.findById(id);
+        Post post = postService.read(id);
         model.addAttribute("post", post);
         return "board/detail";
     }
@@ -72,4 +80,5 @@ public class BoardController {
         postService.delete(id);
         return "redirect:/board?deleted"; // 목록+ "삭제되었습니다"
     }
+    
 }

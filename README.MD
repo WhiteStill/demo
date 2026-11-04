@@ -188,5 +188,31 @@ public class ApiExceptionHandler {
 수정 · 삭제 컨트롤러를 하기 위해 BoardController.java 에 코드를 추가하였다.
 만약 로그인한 사람이 글쓴이면 수정가능 다르면 403이 뜬다
 관리자도 자신의 쓴 글만 수정가능 하지만 관리자는 다른사람의 글 삭제가능
-본인 확인 추가를 위해 PostService.java에 콛를 수정하였다. 
+본인 확인 추가를 위해 PostService.java에 콛를 수정하였다.
+상세 화면을 열 때마다 viewCount 1 증가를 위해 PostService.java - findById을
+public Post read(Long id) { // 상세보기: 조회수 1 증가
+    Post post = findById(id);
+    post.setViewCount(post.getViewCount() + 1);
+    return postRepository.save(post); // id가 있으니 UPDATE
+}
+로 수정하였다.
+그리고 나서 BoardController.java에 Post post = postService.findById(id); 부분을
+Post post = postService.read(id);로 수정하였다.
+내가 쓴 글 모아 보기를 구현하기 위해 PostRepository.java에 코드를 
+public interface PostRepository extends JpaRepository<Post, Long> {
+    List<Post> findByAuthor_UsernameOrderByIdDesc(String username);
+}
+로 수정하였고 PostService.java에
+public List<Post> findMine(String username) { // 내가 쓴 글(최신 글이 위로)
+    return postRepository.findByAuthor_UsernameOrderByIdDesc(username);
+}
+를 추가하였다.BoardController.java에
+@GetMapping("/my") // 내가 쓴 글: GET /board/my (로그인 필요)
+public String myList(Principal principal, Model model) {
+    List<Post> posts = postService.findMine(principal.getName());
+    model.addAttribute("posts", posts);
+    model.addAttribute("listTitle", "내가 쓴 글"); // 목록 화면 재사용, 제목만 변경
+    return "board/list";
+}
+를 추가하여 목록 화면을 다시 쓰면서 listTitle로 제목을 내가 쓴 글로 바꾸기 위해 추가하였다.
 
