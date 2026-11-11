@@ -232,5 +232,51 @@ public String myList(Principal principal, Model model) {
 글 삭제 기능을 추가하기 위해 Post.java에 코드를 추가하였다.
 회원 삭제 기능을 추가하기 위해 PostRepository.java 와 CommentRepository.java에 코드를 추가하였다.
 또한 MemberService.java에 코드를 추가하여 서비스에서 검사하고 통과해야 회원을 삭제 할 수 있도록 하였다.
-
+로그인한 사람이 쓴 글을 10개씩 페이지 단위로 가져오기 위해 PostRepository.java에 Page<Post> findByAuthor_Username(String username, Pageable pageable); 추가하였다.
+그리고 page 번호를 받아서 10개씩, 최신 글이 위로 오게 가져오기 위해 PostService.java의 findMine 메서드 아래에 코드를
+public Page<Post> findMinePage(String username, int page) { // 내가 쓴 글 10개씩
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+    return postRepository.findByAuthor_Username(username, pageable);
+}
+로 추가하였다. 그리고 나서 BoardController.java의 myList 메서드를
+@GetMapping("/my") // 내가 쓴 글: GET /board/my?page=0 (로그인 필요)
+public String myList(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
+    Page<Post> posts = postService.findMinePage(principal.getName(), page);
+    model.addAttribute("posts", posts.getContent()); // 이번 페이지 글 10개
+    model.addAttribute("page", posts); // 페이지 번호 표시용
+    model.addAttribute("pageUrl", "/board/my"); // 페이지 링크를 /board/my?page=1 로
+    model.addAttribute("listTitle", "내가 쓴 글"); // 목록 화면 재사용, 제목만 변경
+    return "board/list";
+}
+로 수정하였다.
+작성자 이름으로 검색하기 위해 PostRepository.java의 search 메서드 아래에 코드를
+@Query("SELECT p FROM Post p WHERE p.author.name LIKE %:name%")
+Page<Post> searchByWriter(@Param("name") String name, Pageable pageable);
+로 추가하였다.
+p.author.name은 글 → 작성자 → 이름 순서로 따라가는 것이고, member 테이블 JOIN은 JPA가 자동으로 해 준다.
+그리고 type에 따라 검색 방식을 고르기 위해 PostService.java의 findPage 메서드를
+public Page<Post> findPage(String keyword, String type, int page) {
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+    if (keyword == null || keyword.isBlank()) {
+        return postRepository.findAll(pageable);
+    }
+    if ("writer".equals(type)) { // 작성자로 검색
+        return postRepository.searchByWriter(keyword.trim(), pageable);
+    }
+    return postRepository.search(keyword.trim(), pageable); // 제목+내용 검색
+}
+로 수정하였다.
+그리고 나서 BoardController.java의 list 메서드를
+@GetMapping // 목록: GET /board?page=0&keyword=스프링&type=writer (누구나)
+public String list(@RequestParam(defaultValue = "0") int page,
+                   @RequestParam(required = false) String keyword,
+                   @RequestParam(defaultValue = "all") String type, Model model) {
+    Page<Post> posts = postService.findPage(keyword, type, page);
+    model.addAttribute("posts", posts.getContent());
+    model.addAttribute("page", posts);
+    model.addAttribute("keyword", keyword);
+    model.addAttribute("type", type); // 선택 상자 표시 + 페이지 링크에 type 유지
+    return "board/list";
+}
+로 수정하였다
 

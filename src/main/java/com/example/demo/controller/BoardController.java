@@ -19,20 +19,24 @@ public class BoardController {
     @Autowired // ①필드추가(postService 아래)
     CommentService commentService;
 
-    @GetMapping // 목록: GET /board?page=0&keyword=스프링(누구나)
+    @GetMapping // 목록: GET /board?page=0&keyword=스프링&type=writer(누구나)
     public String list(@RequestParam(defaultValue = "0") int page,
-                       @RequestParam(required = false) String keyword, Model model) {
-        Page<Post> posts = postService.findPage(keyword, page);
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "all") String type, Model model) {
+        Page<Post> posts = postService.findPage(keyword, type, page);
         model.addAttribute("posts", posts.getContent());
         model.addAttribute("page", posts);
         model.addAttribute("keyword", keyword); // 검색창에검색어유지, 페이지링크에도붙인다
+        model.addAttribute("type", type); // [연습문제 2] 선택 상자 표시 + 페이지 링크에 type 유지
         return "board/list";
     }
     
-    @GetMapping("/my") // 내가 쓴 글: GET /board/my (로그인 필요)
-    public String myList(Principal principal, Model model) {
-        List<Post> posts = postService.findMine(principal.getName());
-        model.addAttribute("posts", posts);
+    @GetMapping("/my") // 내가 쓴 글: GET /board/my?page=0 (로그인 필요)
+    public String myList(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
+        Page<Post> posts = postService.findMinePage(principal.getName(), page);
+        model.addAttribute("posts", posts.getContent()); // 이번 페이지 글 10개
+        model.addAttribute("page", posts); // 페이지 번호 표시용
+        model.addAttribute("pageUrl", "/board/my"); // 페이지 링크를 /board/my?page=1 로
         model.addAttribute("listTitle", "내가 쓴 글"); // 목록 화면 재사용, 제목만 변경
         return "board/list";
     }

@@ -53,10 +53,13 @@ public static final int PAGE_SIZE = 10; // 한페이지에보여줄글수
 // [10주차] 단계1 : 페이지목록(page 는0 부터)
 // [10주차] 단계2 : 페이지목록+ 검색(검색어가없으면전체)
 
-public Page<Post> findPage(String keyword, int page) {
+public Page<Post> findPage(String keyword, String type, int page) {
     PageRequest pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
-    if (keyword == null || keyword.isBlank()) { // 앞이true면뒤를실행하지않음
+    if (keyword == null || keyword.isBlank()) { // 앞이 true면뒤를실행하지않음
         return postRepository.findAll(pageable);
+    }
+    if ("writer".equals(type)) { // [연습문제 2] 작성자로 검색
+        return postRepository.searchByWriter(keyword.trim(), pageable);
     }
     return postRepository.search(keyword.trim(), pageable); // 검색결과도10개씩
 }
@@ -95,8 +98,9 @@ public void delete(Long id) { // 글삭제(본인또는관리자)
     postRepository.delete(post);
 }
 
-public List<Post> findMine(String username) { // 내가 쓴 글(최신 글이 위로)
-    return postRepository.findByAuthor_UsernameOrderByIdDesc(username);
+public Page<Post> findMinePage(String username, int page) { // [연습문제 1] 내가 쓴 글 10개씩
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+    return postRepository.findByAuthor_Username(username, pageable);
 }
 
 private void checkWriter(Post post) { // 로그인 한사람이 글쓴이인지→ 아니면403
