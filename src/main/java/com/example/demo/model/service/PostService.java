@@ -2,6 +2,8 @@ package com.example.demo.model.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -47,6 +49,18 @@ private void validate(PostForm form) { // 빈값검사(5주차회원가입과같
         throw new IllegalArgumentException("제목은 100자까지 입력할 수 있습니다.");
     }
 }
+public static final int PAGE_SIZE = 10; // 한페이지에보여줄글수
+// [10주차] 단계1 : 페이지목록(page 는0 부터)
+// [10주차] 단계2 : 페이지목록+ 검색(검색어가없으면전체)
+
+public Page<Post> findPage(String keyword, int page) {
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+    if (keyword == null || keyword.isBlank()) { // 앞이true면뒤를실행하지않음
+        return postRepository.findAll(pageable);
+    }
+    return postRepository.search(keyword.trim(), pageable); // 검색결과도10개씩
+}
+
 public Post findById(Long id) { // 글1개(없으면404 → templates/error/404.html)
 return postRepository.findById(id)
 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "글이 존재하지 않습니다."));

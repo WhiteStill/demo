@@ -216,3 +216,21 @@ public String myList(Principal principal, Model model) {
 }
 를 추가하여 목록 화면을 다시 쓰면서 listTitle로 제목을 내가 쓴 글로 바꾸기 위해 추가하였다.
 
+## 10주차 페이징+ 검색+ 댓글완료
+한페이지에 글 목록이 10개씩 나오도록 하기 위해 PostService.java에 코드를 추가하였다.
+또한 BoardController.java 의 list()의 코드를 교체하였다.
+이번엔 검색 기능을 추가할 하기 위해 PostRepository.java에 코드를 추가하였다.
+또한 PostService.java 의 findPage()에 코드를 교체하였다.
+그리고 BoardController.java 의 list()의 코드를 추가 교체하였다.
+글의 댓글 엔티티를 추가하기 위해 domain 폴더에 Comment.java 를 생성하고 코드를 추가하였다.
+댓글 리포지토리를 추가하기 위해 repository 폴더에CommentRepository.java 를 생성하고 코드를 추가하였다.
+댓글 서비스를 추가하기 위해 service 폴더에 CommentService.java 를 생성하고 코드를 추가하였다.
+댓글 컨트롤러를 추가하기 위해 controller 폴더에 CommentController.java 를 생성하고 코드를 추가하였다.
+상세화면에 댓글 넘기기 기능을 추가하기 위해 BoardController.java에 코드를 수정하였다.
+댓글 삭제 기능을 추가하기 위해 CommentService.java에 코드를 추가하였다.
+그리고 관리자가 추가로 확인하거나 지울수 있도록 CommentService.java 와 CommentController.java에 코드를 추가하였다.
+글 삭제 기능을 추가하기 위해 Post.java에 코드를 추가하였다.
+회원 삭제 기능을 추가하기 위해 PostRepository.java 와 CommentRepository.java에 코드를 추가하였다.
+또한 MemberService.java에 코드를 추가하여 서비스에서 검사하고 통과해야 회원을 삭제 할 수 있도록 하였다.
+
+
