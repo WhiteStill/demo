@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/testdb").hasAnyRole("ADMIN", "MANAGER") // ← 추가
                         .requestMatchers("/api/hello").permitAll()
                         .requestMatchers("/board", "/board/{id:\\d+}").permitAll() // 게시판목록·상세: 누구나
+                        .requestMatchers("/uploads/**").permitAll() // [11주차] 포스터이미지: 누구나(올리기는글쓰기라서로그인)
                         .anyRequest().authenticated())
                 // 2. 폼 로그인설정(인증)
                         .formLogin(form -> form

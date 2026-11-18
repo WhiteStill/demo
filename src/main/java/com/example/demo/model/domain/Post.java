@@ -32,4 +32,22 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE) // 외래키는Comment.post 가관리
     @ToString.Exclude @EqualsAndHashCode.Exclude // 글→ 댓글→ 글… 무한반복방지
     private List<Comment> comments = new ArrayList<>();
+
+    // [11주차] 단계1 : 모집글(정원이있으면모집글, null 이면일반글)
+    private Integer capacity; // 정원(모집인원)
+    @Column(nullable = false) // 신청한인원(신청확정마다1 증가)
+    private int appliedCount = 0;
+    private String posterFile; // 포스터이미지: uploads/ 에저장된파일이름(단계2)
+
+    public boolean isRecruit() {
+        return capacity != null;
+    } // 모집글인가
+
+    public boolean isFull() {
+        return isRecruit() && appliedCount >= capacity;
+    } // 마감인가
+
+    public int getRemaining() {
+        return isRecruit() ? capacity - appliedCount : 0;
+    } // 남은자리
 }

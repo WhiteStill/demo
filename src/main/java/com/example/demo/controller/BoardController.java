@@ -90,8 +90,11 @@ public class BoardController {
 
     @PostMapping("/{id}/delete") // 삭제처리: POST /board/3/delete
     public String delete(@PathVariable Long id) {
-        postService.delete(id);
-        return "redirect:/board?deleted"; // 목록+ "삭제되었습니다"
-    }
-    
+        try {
+            postService.delete(id);
+            return "redirect:/board?deleted"; // 목록+ "삭제되었습니다"
+        } catch (IllegalStateException e) { // [연습문제 2] 신청자가 있는 모집글
+            return "redirect:/board/" + id + "?deleteError"; // 상세 화면 + 안내 메시지
+        }
+    } 
 }

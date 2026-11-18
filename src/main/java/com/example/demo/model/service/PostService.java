@@ -1,6 +1,7 @@
 package com.example.demo.model.service;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.demo.model.domain.Member;
 import com.example.demo.model.domain.Post;
 import com.example.demo.model.dto.PostForm;
+import com.example.demo.model.repository.EnrollmentRepository;
 import com.example.demo.model.repository.MemberRepository;
 import com.example.demo.model.repository.PostRepository;
 @Service // 게시판서비스
@@ -23,6 +25,11 @@ public class PostService {
 private PostRepository postRepository;
 @Autowired
 private MemberRepository memberRepository;
+@Autowired // [11주차] 단계2 : 업로드파일저장소(제공코드)
+private FileStore fileStore;
+
+@Autowired // [연습문제 2] 신청자 확인용
+private EnrollmentRepository enrollmentRepository;
 
 public List<Post> findAll() { // 전체목록(최신글이위로)
     return postRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -37,10 +44,16 @@ public Post write(PostForm form, String username) { // 글쓰기(작성자= 로�
     post.setContent(form.getContent());
     post.setAuthor(author); // 작성자는화면이아니라서버가정한다
     post.setCreatedAt(LocalDateTime.now());
+    post.setCapacity(form.getCapacity()); // [11주차] 단계1 : 정원(비우면null = 일반글)
+    post.setPosterFile(fileStore.save(form.getPoster())); // [11주차] 단계2 : 포스터저장→ 파일이름(없으면null)
     return postRepository.save(post); // INSERT
 }
 
 private void validate(PostForm form) { // 빈값검사(5주차회원가입과같은방식)
+    // [11주차] 단계1 : 모집인원은1~100명
+    if (form.getCapacity() != null && (form.getCapacity() < 1 || form.getCapacity() > 100)) {
+        throw new IllegalArgumentException("모집인원은 1~100명으로 입력하세요.");
+    }
     if (form.getTitle() == null || form.getTitle().isBlank()
             || form.getContent() == null || form.getContent().isBlank()) {
         throw new IllegalArgumentException("제목과 내용을 모두 입력하세요.");
@@ -62,6 +75,11 @@ public Page<Post> findPage(String keyword, String type, int page) {
         return postRepository.searchByWriter(keyword.trim(), pageable);
     }
     return postRepository.search(keyword.trim(), pageable); // 검색결과도10개씩
+}
+
+// [11주차] 단계3 : 바구니에담긴글들(번호목록으로한번에)
+public List<Post> findAllById(Collection<Long> ids) {
+    return postRepository.findAllById(ids); // SELECT ... WHERE id IN (?, ?, ?)
 }
 
 public Post findById(Long id) { // 글1개(없으면404 → templates/error/404.html)
@@ -95,7 +113,11 @@ public void delete(Long id) { // 글삭제(본인또는관리자)
     Post post = findById(id);
     if (!isAdmin())
         checkWriter(post); // ★추가: 관리자는 누구 글이든 삭제가능
+    if (enrollmentRepository.existsByPost(post)) { // [연습문제 2] 신청자가 있으면 삭제 막기
+        throw new IllegalStateException("신청자가 있는 모집글은 삭제할 수 없습니다.");
+    }
     postRepository.delete(post);
+    fileStore.delete(post.getPosterFile()); // [연습문제 2] 포스터 파일도 삭제
 }
 
 public Page<Post> findMinePage(String username, int page) { // [연습문제 1] 내가 쓴 글 10개씩

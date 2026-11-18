@@ -280,3 +280,101 @@ public String list(@RequestParam(defaultValue = "0") int page,
 }
 로 수정하였다
 
+## 11주차 파일업로드+ 신청바구니+ 트랜잭션완료
+모집글를 개설하기 위해 Post.java에 엔티티 코드를 추가하였다.
+그전에 교수님께서 업로드 한 파일로 덮어쓰어 모집글의 틀을 변경하였다.
+모집글의 폼과 서비스를 추가하기 위해 PostForm.java에 코드를 추가하였다.
+이어서 PostService.java에도 코드를 추가하였다.
+파일업로드 서비스를 추가하기 위해 PostForm.java와 PostService.java에 코드를 추가하였다.
+파일이미지를 보여주기 위해 config 폴더에 WebConfig.java 를 생성하고 코드를 추가하였다. 그리고 SecurityConfig.java에 코드를 추가하였다.
+업로드 된 사진의 크기를 설정하기 위해 application.properties에 코드를 추가하여 업로드 할 수 있는 사진의 크기를 5MB로 설정하였다.
+장바구니 서비스를 추가하여기 위해 PostService.java에 코드를 추가하였다.
+장바구니 컨트롤러를 추가하기 위해 controller 폴더에 CartController.java 를 생성하고 코드를 추가하였다.
+또한 넣다 뺐는 기능을 추가하기 위해 CartController.java에 이어서 코드를 추가하였다.
+마지막으로 세션에서 꺼내는 기능을 추가하기 위해 CartController.java에 이어서 코드를 추가하였다.
+이제 장바구니에서나 또는 신청을 하기 위해 먼저 신청 엔티티를 추가할 domain 폴더에 Enrollment.java 를 생성하고 코드를 추가하였다. 그리고 신청 리포지토리를 위해 repository 폴더에 EnrollmentRepository.java 를 생성하고 코드를 추가하였다.
+신청 서비스를 위해 service 폴더에EnrollmentService.java 를 생성하고 코드를 추가하고 이어서 검사기능, 저장 및 차감 기능의 대한 코드를 이어서 추가하였다.
+신청 컨트롤러를 위해 CartController.java에 코드를 추가하고 신청 확정 기능을 위해 이어서 추가로 추가하였다.
+바구니의 모집글을 한번에 신청하는 기능을 위해 EnrollmentService.java에 @Transactional를 추가하였다.
+
+내 신청 내역에 취소 버튼을 만들어서, 누르면 신청 내역이 삭제되고 신청 인원이 1 줄어들게 하였다.
+본인 신청만 취소할 수 있게 하고, 두 작업을 한 트랜잭션으로 묶고, save() 없이 변경 감지로 인원을 줄이기 위해 EnrollmentService.java의 맨 위 import 부분에
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.server.ResponseStatusException;
+를 추가하고, confirm 메서드 아래에 코드를
+@Transactional // 신청 내역 삭제 + 신청 인원 -1 을 한 트랜잭션으로
+public void cancel(Long enrollmentId, String username) {
+    Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "신청 내역이 없습니다."));
+    if (!enrollment.getMember().getUsername().equals(username)) { // 본인 신청만 취소
+        throw new AccessDeniedException("본인 신청만 취소할 수 있습니다."); // → 403
+    }
+    Post post = enrollment.getPost();
+    post.setAppliedCount(post.getAppliedCount() - 1); // save() 없이 변경 감지로 UPDATE
+    enrollmentRepository.delete(enrollment); // DELETE 신청 내역
+}
+로 추가하였다.
+@Transactional 안에서 가져온 post는 JPA가 관리하고 있어서, save()를 부르지 않아도 메서드가 끝날 때 바뀐 값이 UPDATE된다.
+중간에 오류가 나면 신청 내역 삭제와 인원 감소가 둘 다 취소(롤백)된다.
+남의 신청 번호로 취소하면 AccessDeniedException이 발생해서 403이 뜬다.
+그리고 나서 POST /cart/enrollments/{id}/cancel 주소를 만들기 위해 CartController.java의 confirm 메서드 아래에 코드를
+@PostMapping("/enrollments/{id}/cancel") // 신청 취소: POST /cart/enrollments/3/cancel
+public String cancel(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+    enrollmentService.cancel(id, principal.getName());
+    redirect.addFlashAttribute("message", "신청이 취소되었습니다.");
+    return "redirect:/cart";
+}
+로 추가하였다.
+마지막으로 취소 버튼이 보이도록 cart.html의 연습 ① 부분에서 주석 표시(<!--/* 와 */-->)를 지웠다.
+마감된 모집글도 취소하면 appliedCount가 줄어서 isFull()이 false가 되므로 다시 모집 중으로 바뀐다.
+
+신청자가 있는 모집글이나 신청 내역이 있는 회원을 삭제하면 외래 키 때문에 500 오류가 나서, 삭제를 막고 안내 메시지가 나오게 하였다.
+글과 댓글은 함께 삭제(cascade)했지만, 모집글과 신청 내역은 신청한 사람이 모르게 사라지면 안 되고, 회원과 신청 내역은 신청 인원 계산이 어긋나기 때문에 막기로 하였다.
+신청자와 신청 내역이 있는지 확인하기 위해 EnrollmentRepository.java의 findByMember_UsernameOrderByIdDesc 아래에 코드를
+boolean existsByPost(Post post);       // 이 모집글에 신청자가 있는지
+boolean existsByMember(Member member); // 이 회원의 신청 내역이 있는지
+로 추가하였다.
+그리고 신청자가 있는 모집글 삭제를 막고, 글을 지울 때 포스터 파일도 지우기 위해 PostService.java의 맨 위에
+import com.example.demo.model.repository.EnrollmentRepository;
+를 추가하고, private FileStore fileStore; 아래에
+@Autowired // 신청자 확인용
+private EnrollmentRepository enrollmentRepository;
+를 추가하였다.
+그리고 delete 메서드를
+public void delete(Long id) { // 글삭제(본인또는관리자)
+    Post post = findById(id);
+    if (!isAdmin())
+        checkWriter(post); // 관리자는 누구 글이든 삭제가능
+    if (enrollmentRepository.existsByPost(post)) { // 신청자가 있으면 삭제 막기
+        throw new IllegalStateException("신청자가 있는 모집글은 삭제할 수 없습니다.");
+    }
+    postRepository.delete(post);
+    fileStore.delete(post.getPosterFile()); // 포스터 파일도 삭제
+}
+로 수정하였다.
+포스터가 없는 글은 posterFile이 null이라 fileStore.delete가 그냥 넘어간다.
+그리고 나서 신청자가 있으면 상세 화면에 안내 메시지가 나오게 하기 위해 BoardController.java의 delete 메서드를
+@PostMapping("/{id}/delete") // 삭제처리: POST /board/3/delete
+public String delete(@PathVariable Long id) {
+    try {
+        postService.delete(id);
+        return "redirect:/board?deleted"; // 목록+ "삭제되었습니다"
+    } catch (IllegalStateException e) { // 신청자가 있는 모집글
+        return "redirect:/board/" + id + "?deleteError"; // 상세 화면 + 안내 메시지
+    }
+}
+로 수정하였다.
+?deleteError로 돌아가면 detail.html에 이미 있는 "신청자가 있는 모집글은 삭제할 수 없습니다." 문구가 보인다.
+마지막으로 신청 내역이 있는 회원 삭제를 막기 위해 MemberService.java의 맨 위에
+import com.example.demo.model.repository.EnrollmentRepository;
+를 추가하고, private CommentRepository commentRepository; 아래에
+@Autowired // 신청 내역 확인용
+private EnrollmentRepository enrollmentRepository;
+를 추가하였다.
+그리고 deleteMember 메서드에서 글·댓글을 검사하는 if 블록 아래, memberRepository.delete(member); 바로 위에 코드를
+if (enrollmentRepository.existsByMember(member)) { // 신청 내역이 있으면 삭제 막기
+    throw new IllegalArgumentException("신청 내역이 있는 회원은 삭제할 수 없습니다.");
+}
+로 추가하였다.
+IllegalArgumentException은 기존 ApiExceptionHandler가 400으로 바꿔 주기 때문에 API로 삭제하면 400과 안내 메시지가 나온다.
