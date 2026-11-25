@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/hello").permitAll()
                         .requestMatchers("/board", "/board/{id:\\d+}").permitAll() // 게시판목록·상세: 누구나
                         .requestMatchers("/uploads/**").permitAll() // [11주차] 포스터이미지: 누구나(올리기는글쓰기라서로그인)
+                        .requestMatchers("/ws").permitAll() // [12주차] 실시간연결: 누구나
+                        // (남은자리는비로그인도본다, 개인알림은로그인한사람만받는다)
                         .anyRequest().authenticated())
                 // 2. 폼 로그인설정(인증)
                         .formLogin(form -> form

@@ -4,17 +4,21 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.example.demo.model.domain.Enrollment;
 import com.example.demo.model.domain.Member;
 import com.example.demo.model.domain.Post;
+import com.example.demo.model.dto.SeatMessage;
 import com.example.demo.model.repository.EnrollmentRepository;
 import com.example.demo.model.repository.MemberRepository;
 import com.example.demo.model.repository.PostRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import com.example.demo.model.dto.Notification;
 
 @Service // [11주차] 단계4 : 신청서비스
 public class EnrollmentService {
@@ -24,6 +28,8 @@ public class EnrollmentService {
     private PostRepository postRepository;
     @Autowired
     private MemberRepository memberRepository;
+    @Autowired // [12주차] 실시간메시지
+    private ApplicationEventPublisher eventPublisher; // [12주차] 단계3 : 이벤트발행
 
     public List<Enrollment> findMine(String username) {
         return enrollmentRepository.findByMember_UsernameOrderByIdDesc(username);
@@ -53,6 +59,14 @@ public class EnrollmentService {
             enrollmentRepository.save(enrollment); // ①INSERT 신청내역
             post.setAppliedCount(post.getAppliedCount() + 1);
             postRepository.save(post); // ②UPDATE 신청인원+ 1 (남은자리-1)
+            eventPublisher.publishEvent(SeatMessage.from(post)); // [12주차] 단계3 : 이벤트만던진다(커밋되면RealtimeNotifier 가보낸다)
+            String writer = post.getAuthor().getUsername();
+            if (!writer.equals(username)) { // [12주차] 단계4 : 모집글쓴사람에게알림(내글에내가신청하면생략)
+                eventPublisher.publishEvent(new Notification(writer,
+                        member.getName() + "님이'" + post.getTitle() + "' 에신청했습니다. ("
+                                + post.getAppliedCount() + "/" + post.getCapacity() + ")",
+                        post.getId()));
+            }
         }
         return postIds.size();
     }
@@ -67,5 +81,8 @@ public class EnrollmentService {
         Post post = enrollment.getPost();
         post.setAppliedCount(post.getAppliedCount() - 1); // save() 없이 변경 감지로 UPDATE
         enrollmentRepository.delete(enrollment); // DELETE 신청 내역
+        eventPublisher.publishEvent(SeatMessage.from(post)); // [12주차 연습 1] 남은 자리 다시 늘어난 것을 모두에게
+        eventPublisher.publishEvent(new Notification(post.getAuthor().getUsername(), // [12주차 연습 1] 모집글 쓴 사람에게 취소 알림
+                enrollment.getMember().getName() + "님이 '" + post.getTitle() + "' 신청을 취소했습니다.", post.getId()));
     }
 }

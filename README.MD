@@ -378,3 +378,42 @@ if (enrollmentRepository.existsByMember(member)) { // 신청 내역이 있으면
 }
 로 추가하였다.
 IllegalArgumentException은 기존 ApiExceptionHandler가 400으로 바꿔 주기 때문에 API로 삭제하면 400과 안내 메시지가 나온다.
+
+## 12주차WebSocket 실시간 알림 완료
+WebSocket을 켜기 위해 pom.xml에 시큐리티 의존성 아래에 추가했다.
+그리고 SecurityConfig.java에 코드를 추가하였다.
+남은 자리 메시지를 추가하기 위해 dto 폴더에SeatMessage.java 를 생성하고 코드를 추가하였다.
+또한 EnrollmentService.java에 코드를 추가하였다.
+커밋 뒤에 보내기 이벤트를 추가하기 위해 service 폴더에 RealtimeNotifier.java를 생성하고 코드를 추가하였다. 그런다음 EnrollmentService.java에 코드를 추가하였다.
+개인 알림 메시지를 추가하기 위해 dto 폴더에 Notification.java 를 생성하고 코드를 추가하였다.
+그런다음 RealtimeNotifier.java에 코드를 추가하였다. 그리고 이벤트를 발생시키기 위해 EnrollmentService.java에 코드를 추가하였다.
+
+신청 취소에 실시간 기능을 추가해서, 취소하면 열어 둔 화면의 남은 자리가 바로 다시 늘어나고 모집글 쓴 사람에게 "OO님이 '...' 신청을 취소했습니다." 알림이 가게 하였다.
+cancel()에는 이미 @Transactional이 붙어 있어서 이벤트만 던지면 되기 때문에 EnrollmentService.java의 cancel 메서드에서 enrollmentRepository.delete(enrollment); 아래에 코드를
+eventPublisher.publishEvent(SeatMessage.from(post)); // 남은 자리 다시 늘어난 것을 모두에게
+eventPublisher.publishEvent(new Notification(post.getAuthor().getUsername(), // 모집글 쓴 사람에게 취소 알림
+        enrollment.getMember().getName() + "님이 '" + post.getTitle() + "' 신청을 취소했습니다.", post.getId()));
+로 추가하였다.
+SeatMessage는 /topic/seats를 구독한 모든 화면에 가서 마감이었던 글도 모집 중으로 바뀌고 남은 자리가 늘어난다.
+Notification은 모집글 쓴 사람에게만 /user/queue/notifications로 간다.
+두 이벤트 모두 RealtimeNotifier의 @TransactionalEventListener가 커밋이 성공한 뒤에 보내기 때문에, 취소가 롤백되면 메시지도 가지 않는다
+내 글에 다른 사람이 댓글을 달면 글쓴이에게 "OO님이 '...' 에 댓글을 남겼습니다." 알림이 가게 하였고, 내 글에 내가 댓글을 달면 알림이 가지 않게 하였다.
+이벤트를 던지기 위해 CommentService.java의 맨 위에
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.model.dto.Notification;
+를 추가하고, private PostService postService; 아래에
+@Autowired // 이벤트 발행
+private ApplicationEventPublisher eventPublisher;
+를 추가하였다.
+그리고 write 메서드 위에 @Transactional을 붙이고, 마지막 return commentRepository.save(comment); 부분을
+Comment saved = commentRepository.save(comment); // INSERT
+String writer = post.getAuthor().getUsername();
+if (!writer.equals(username)) { // 내 글에 내 댓글은 알림 없음
+    eventPublisher.publishEvent(new Notification(writer,
+            author.getName() + "님이 '" + post.getTitle() + "' 에 댓글을 남겼습니다.", post.getId()));
+}
+return saved;
+로 수정하였다.
+10주차 CommentService.write()에는 @Transactional이 없었는데, @TransactionalEventListener는 트랜잭션이 커밋된 뒤에 실행되기 때문에 트랜잭션이 없으면 이벤트를 던져도 알림이 오지 않는다.
+
